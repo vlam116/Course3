@@ -1,9 +1,9 @@
 train = read.table("X_train.txt")
 test = read.table("X_test.txt")
-train = as.tibble(train)
-test = as_tibble(test)
 train_y = read.table("y_train.txt")
 test_y = read.table("y_test.txt")
+train = as.tibble(train)
+test = as_tibble(test)
 train_y = as_tibble(train_y)
 test_y = as_tibble(test_y)
 bax_test = read.table("body_acc_x_test.txt")
@@ -47,17 +47,6 @@ subject_train = read.table("subject_train.txt")
 subject_test = as_tibble(subject_test)
 subject_train = as_tibble(subject_train)
 
-subject_train = subject_train %>% rename(ID = V1)
-train_bind = bind_cols(subject_train, train)
-
-subject_test = subject_test %>% rename(ID = V1)
-test_bind = bind_cols(subject_test, test)
-
-y_all = bind_rows(train_y, test_y)
-
-all_bind = bind_rows(train_bind, test_bind)
-all = bind_cols(all_bind,y_all)
-
 bax_bind = bind_rows(bax_train, bax_test)
 bay_bind = bind_rows(bay_train, bay_test)
 baz_bind = bind_rows(baz_train, baz_test)
@@ -74,20 +63,25 @@ features = read.table("features.txt")
 features = as_tibble(features)
 features$V2 = as.character(features$V2)
 
-replacement = c(features$V2)
-
-renaming = function(all, features){
-  cols_to_replace = c(names(all))
-  replacement_cols = c(names(features))
-      for(i in length(cols_to_replace)) {
-        all = all %>% mutate(replacement_cols[i] = cols_to_replace[i])
-      }
-  all_new = all
-}
-
 features$V2[c(303:316,382:395,461:474)] = str_replace(features$V2[c(303:316,382:395,461:474)], "f","Xf")
 features$V2[c(317:330,396:409,475:488)] = str_replace(features$V2[c(317:330,396:409,475:488)], "f","Yf")
 features$V2[c(331:344,410:423,489:502)] = str_replace(features$V2[c(331:344,410:423,489:502)], "f","Zf")
 features = features %>% pivot_wider(names_from = V2, values_from = V1)
 
+replacement = c(features$V2)
 
+for(i in 1:length(replacement)) {
+  names(all)[i] = replacement[i]
+}
+
+y_all = bind_rows(train_y, test_y)
+
+all_bind = bind_rows(train_bind, test_bind)
+all = bind_cols(all_bind,y_all)
+
+subject_train = subject_train %>% rename(ID = V1)
+subject_test = subject_test %>% rename(ID = V1)
+subject_all = bind_rows(subject_train, subject_test)
+
+all = bind_cols(y_all,all)
+all = bind_cols(subject_all,all)
