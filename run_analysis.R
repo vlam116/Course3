@@ -6,11 +6,11 @@
 
 ## Reading in packages
 library(tidyverse)
-library(plyr)
 library(stringr)
 
 ## Reading in the training and testing sets and the activity labels, then converting to tibble format for
 ## better readability. 
+setwd("Your WD Here")
 
 train = read.table("X_train.txt")
 test = read.table("X_test.txt")
@@ -41,7 +41,7 @@ tay_train = read.table("total_acc_y_train.txt")
 tay_test = read.table("total_acc_y_test.txt")
 taz_test = read.table("total_acc_z_test.txt")
 taz_train = read.table("total_acc_z_train.txt")
-bax_test = as.tibble(bax_test)
+bax_test = as_tibble(bax_test)
 bax_test = as_tibble(bax_test)
 bax_train = as_tibble(bax_train)
 bay_test = as_tibble(bax_test)
@@ -101,10 +101,10 @@ for(i in 1:length(replacement)) {
 
 y_bind = y_bind %>% rename(Activity = V1) # Give proper column name 
 y_bind$Activity = as.factor(y_bind$Activity) # Factorize and rename levels to the activity labels
-levels(y_bind$Activity) = mapvalues(y_bind$Activity, 
-                                from = c(1,2,3,4,5,6), 
-                                to = c("WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS", 
-                                       "SITTING", "STANDING", "LAYING"))
+y_bind$Activity = plyr::revalue(y_bind$Activity, 
+                                c("1" = "Walking", "2" = "Walking_Upstairs", 
+                                  "3" = "Walking_Downstairs", "4" = "Sitting", 
+                                  "5" = "Standing", "6" = "Laying"))
 
 subject_train = subject_train %>% rename(ID = V1)
 subject_test = subject_test %>% rename(ID = V1)
@@ -170,3 +170,31 @@ all_data = bind_cols(id_xy_bind, raw_vars)
 ## is we have already given descriptive activity names to the activities in the data set (Step 3) and labeled
 ## the data set with descriptive variable names (Step 4) in the first part. 
 
+## While there a lot of columns to filter through, we can simply use the base R grepl function to search for
+## column names that contain the either of the strings "mean" or "std" and create an index of column names.
+## Then we can subset the entire data set. 
+
+## Create an index that returns TRUE if there is a matching name from all_data containing the pattern. We
+## want to keep the ID and Activity name columns, so we also add that to the pattern. Alternatively, we could
+## have used grep instead of grepl, which would have returned all the column indices in all_data that matches
+## the pattern.
+
+col_names_index = grepl("ID|Activity|mean()|std()", names(all_data))
+mean_std = all_data[col_names_index]
+
+## It looks like there are columns measuring meanFreq() that were captured by the pattern. We also need to
+## remove these. Let's use grep now to find the indices that contain meanFreq, then subset using [-].
+
+remove_meanfreq = grep("meanFreq", names(mean_std))
+only_mean_std = mean_std[-remove_meanfreq]
+
+########################################################################################################
+## Final Step: Create independent tidy data set w/ average of each variable for each activity/subject.##
+########################################################################################################
+
+## We can use the group_by function from dplyr to group the data frame from step 4 and then use summarize_all
+## to return the mean for each variable by person (ID) and the activity.
+
+avgs_by_id_and_activity = only_mean_std %>% group_by(ID, Activity) %>% summarize_all("mean")
+
+write.table(avgs_by_id_and_activity, file = "tidied_data.txt", row.names = FALSE)
