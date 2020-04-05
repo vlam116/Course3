@@ -196,5 +196,11 @@ only_mean_std = mean_std[-remove_meanfreq]
 ## to return the mean for each variable by person (ID) and the activity.
 
 avgs_by_id_and_activity = only_mean_std %>% group_by(ID, Activity) %>% summarize_all("mean")
+avgs_by_id_and_activity = avgs_by_id_and_activity %>% rename_at(vars(starts_with("t")),
+                                                                funs(str_replace(.,"t","AverageT")))
+
+avgs_by_id_and_activity = avgs_by_id_and_activity %>% rename_at(vars(starts_with("f")),
+                                                                funs(str_replace(.,"f","AverageF")))
+
 
 write.table(avgs_by_id_and_activity, file = "tidied_data.txt", row.names = FALSE)
