@@ -1,4 +1,4 @@
-Data Codebook - Human Activity Recognition Using Smartphones Tidied Dataset (mean and std values)
+Data Code Book - Human Activity Recognition Using Smartphones Tidied Dataset (mean and std values)
 
 ID - Identification Number for Test Subjects
   1 - Test subject 1
